@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sasi Smart Group HCM Ctes</title>
+    <title>Sasi Smart Group HCM Ctes (Tiempo Real)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,246 +30,363 @@
         #toast.show { opacity: 1; transform: translateY(0); }
         #toast.success { background-color: #22c55e; }
         #toast.error { background-color: #ef4444; }
+        .modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+        .modal-content { background-color: #fefefe; margin: auto; padding: 20px; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); width: 80%; max-width: 500px; text-align: center; }
+        .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+        #auth-section { display: flex; flex-direction: column; gap: 1rem; padding: 2rem; background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); max-width: 400px; margin: 50px auto; }
+        #auth-section h2 { text-align: center; font-size: 1.5rem; font-weight: 600; color: #4b5563; margin-bottom: 1rem; }
+        #app-content { display: none; }
     </style>
 </head>
-<body class="p-4 sm:p-6 lg:p-8">
+<body class="p-4 sm:p-6 lg:p-8 flex flex-col min-h-screen">
 
     <div id="toast"></div>
-
-    <div class="max-w-screen-2xl mx-auto">
-        <header class="mb-6 flex flex-wrap justify-between items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Sasi Smart Group HCM Ctes</h1>
-                <p class="text-gray-600 mt-1">Gestión a gran escala con Auditoría en Google Drive.</p>
-            </div>
-            <button id="btn-limpiar-datos" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i>Limpiar Datos</button>
-        </header>
-
-        <!-- Sección de Entradas de Datos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-            <div class="card">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">1. Cargar Catálogo (CSV)</h2>
-                <p class="text-sm text-gray-500 mb-4">Cargue su stock teórico. El archivo debe ser CSV con <strong>punto y coma (;)</strong> como separador. El sistema ignorará la cabecera.</p>
-                <input type="file" id="csv-file-input" accept=".csv" class="input-field file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-            </div>
-            <div class="card">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">2. Registrar Venta</h2>
-                <form id="form-ventas">
-                    <div class="space-y-4">
-                        <input type="text" id="venta-sku" class="input-field" placeholder="SKU del Producto" required>
-                        <input type="number" id="venta-cantidad" class="input-field" placeholder="Cantidad Vendida" required min="1">
-                        <button type="submit" class="btn btn-primary w-full"><i class="fa-solid fa-cart-shopping"></i>Registrar</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">3. Añadir al Conteo</h2>
-                <form id="form-conteo">
-                    <div class="space-y-4">
-                        <input type="text" id="conteo-sku" class="input-field" placeholder="SKU del Producto" required>
-                        <input type="number" id="conteo-cantidad" class="input-field" placeholder="Cantidad a AÑADIR" required min="1">
-                        <button type="submit" class="btn btn-primary w-full"><i class="fa-solid fa-plus"></i>Añadir</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card border-2 border-amber-400 bg-amber-50">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800"><i class="fa-solid fa-shield-halved"></i> 4. Corregir Stock</h2>
-                <form id="form-correccion">
-                    <div class="space-y-4">
-                        <input type="text" id="correc-sku" class="input-field" placeholder="SKU a corregir" required>
-                        <input type="number" id="correc-cantidad" class="input-field" placeholder="Nuevo Stock Físico TOTAL" required min="0">
-                        <input type="email" id="correc-email" class="input-field" placeholder="Su Email para auditoría" required>
-                        <input type="password" id="correc-codigo" class="input-field" placeholder="Código de Autorización" required>
-                        <button type="submit" class="btn btn-primary w-full bg-amber-600 hover:bg-amber-700"><i class="fa-solid fa-pen-to-square"></i>Corregir</button>
-                    </div>
-                </form>
-            </div>
-             <div class="card border-2 border-rose-400 bg-rose-50">
-                <h2 class="text-xl font-semibold mb-4 text-rose-800"><i class="fa-solid fa-undo"></i> 5. Anular Venta</h2>
-                <form id="form-anulacion">
-                    <div class="space-y-4">
-                        <input type="text" id="anular-sku" class="input-field" placeholder="SKU de la venta a anular" required>
-                        <input type="number" id="anular-cantidad" class="input-field" placeholder="Cantidad a anular" required min="1">
-                        <input type="email" id="anular-email" class="input-field" placeholder="Su Email para auditoría" required>
-                        <input type="password" id="anular-codigo" class="input-field" placeholder="Código de Autorización" required>
-                        <button type="submit" class="btn btn-primary w-full bg-rose-600 hover:bg-rose-700"><i class="fa-solid fa-eraser"></i>Anular</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Dashboard de Reconciliación -->
-        <div class="card">
-             <div class="flex justify-between items-center mb-4 gap-4 flex-wrap">
-                <h2 class="text-2xl font-bold text-gray-800">Dashboard de Reconciliación</h2>
-                <div class="flex gap-4 items-center">
-                    <input type="text" id="search-input" placeholder="Buscar por SKU o Descripción..." class="input-field w-full max-w-xs">
-                    <button id="btn-descargar-csv" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i>Descargar CSV</button>
-                </div>
-             </div>
-             <div class="overflow-x-auto max-h-[65vh]">
-                <table class="w-full">
-                    <thead class="table-header">
-                        <tr>
-                            <th>Prioridad</th><th>SKU</th><th>Estado</th><th>Dif. Auditoría</th><th>Dif. Conteo vs Teórico</th><th>Stock Final Real</th><th>Stock Teórico</th><th>Físico Contado</th><th>Total Vendido</th><th>Fecha Conteo</th><th>Fecha Venta</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dashboard-body"></tbody>
-                </table>
-             </div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <p id="modal-message" class="text-lg font-semibold mb-4"></p>
+            <div id="modal-buttons" class="flex justify-center gap-4"></div>
         </div>
     </div>
 
-    <script>
-        // --- CONFIGURACIÓN ---
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZfcjSDx2vNT7g2_W2Cz3KC0g7RqXQ6b69DAubqqndyo_jrWAmDzwlZTZf_VMpRzhvQw/exec';
+    <main class="flex-grow">
+        <div class="max-w-screen-2xl mx-auto">
+            <header class="mb-6 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Sasi Smart Group HCM Ctes(Tiempo Real)</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="btn-limpiar-datos" class="btn btn-danger"><i class="fa-solid fa-bomb"></i>Limpiar Datos del Negocio</button>
+                    <button id="btn-logout" class="btn btn-secondary"><i class="fa-solid fa-right-from-bracket"></i>Cerrar Sesión</button>
+                </div>
+                <div class="text-gray-600">
+                    Usuario: <span id="user-id-display" class="font-semibold text-indigo-700">Cargando...</span>
+                </div>
+            </header>
 
-        // --- DATABASE AND UI REFERENCES ---
+            <div id="auth-section">
+                <h2>Iniciar Sesión / Registrarse</h2>
+                <input type="email" id="auth-email" class="input-field" placeholder="Correo Electrónico" required>
+                <input type="password" id="auth-password" class="input-field" placeholder="Contraseña" required>
+                <button id="btn-login" class="btn btn-primary">Iniciar Sesión</button>
+                <button id="btn-register" class="btn btn-secondary">Registrarse</button>
+            </div>
+
+            <div id="app-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-700">1. Cargar Catálogo (CSV)</h2>
+                        <input type="file" id="csv-file-input" accept=".csv" class="input-field file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    </div>
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-700">2. Registrar Venta</h2>
+                        <form id="form-ventas">
+                            <div class="space-y-4">
+                                <input type="text" id="venta-sku" class="input-field" placeholder="SKU del Producto" required>
+                                <input type="number" id="venta-cantidad" class="input-field" placeholder="Cantidad Vendida" required min="1">
+                                <button type="submit" class="btn btn-primary w-full"><i class="fa-solid fa-cart-shopping"></i>Registrar</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-700">3. Añadir al Conteo</h2>
+                        <form id="form-conteo">
+                            <div class="space-y-4">
+                                <input type="text" id="conteo-sku" class="input-field" placeholder="SKU del Producto" required>
+                                <input type="number" id="conteo-cantidad" class="input-field" placeholder="Cantidad a AÑADIR" required min="1">
+                                <button type="submit" class="btn btn-primary w-full"><i class="fa-solid fa-plus"></i>Añadir</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card border-2 border-amber-400 bg-amber-50">
+                        <h2 class="text-xl font-semibold mb-4 text-amber-800"><i class="fa-solid fa-shield-halved"></i> 4. Corregir Stock</h2>
+                        <form id="form-correccion">
+                            <div class="space-y-4">
+                                <input type="text" id="correc-sku" class="input-field" placeholder="SKU a corregir" required>
+                                <input type="number" id="correc-cantidad" class="input-field" placeholder="Nuevo Stock Físico TOTAL" required min="0">
+                                <input type="email" id="correc-email" class="input-field" placeholder="Su Email para auditoría" required>
+                                <input type="password" id="correc-codigo" class="input-field" placeholder="Código de Autorización" required>
+                                <button type="submit" class="btn btn-primary w-full bg-amber-600 hover:bg-amber-700"><i class="fa-solid fa-pen-to-square"></i>Corregir</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card border-2 border-rose-400 bg-rose-50">
+                        <h2 class="text-xl font-semibold mb-4 text-rose-800"><i class="fa-solid fa-undo"></i> 5. Anular Venta</h2>
+                        <form id="form-anulacion">
+                            <div class="space-y-4">
+                                <input type="text" id="anular-sku" class="input-field" placeholder="SKU de la venta a anular" required>
+                                <input type="number" id="anular-cantidad" class="input-field" placeholder="Cantidad a anular" required min="1">
+                                <input type="email" id="anular-email" class="input-field" placeholder="Su Email para auditoría" required>
+                                <input type="password" id="anular-codigo" class="input-field" placeholder="Código de Autorización" required>
+                                <button type="submit" class="btn btn-primary w-full bg-rose-600 hover:bg-rose-700"><i class="fa-solid fa-eraser"></i>Anular</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="flex justify-between items-center mb-4 gap-4 flex-wrap">
+                        <h2 class="text-2xl font-bold text-gray-800">Dashboard de Reconciliación</h2>
+                        <div class="flex gap-4 items-center">
+                            <input type="text" id="search-input" placeholder="Buscar por SKU..." class="input-field w-full max-w-xs">
+                            <button id="btn-descargar-csv" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i>Descargar CSV</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[65vh]">
+                        <table class="w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th>Prioridad</th><th>SKU</th><th>Estado</th><th>Dif. Auditoría</th><th>Dif. Conteo vs Teórico</th><th>Stock Final Real</th><th>Stock Teórico</th><th>Físico Contado</th><th>Total Vendido</th><th>Fecha Conteo</th><th>Fecha Venta</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center p-4 text-gray-500 text-sm mt-auto">
+        <p>Hecho por Cristian Morinigo</p>
+    </footer>
+
+    <script type="module">
+        const BUSINESS_ID = 'Sasi Smart Group HCM Ctes'; 
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxao_3seapqZfG2GMgoRO4cksKOMvNi-0eb5rkv252vKUj6hl3mxRfWOESsMC2v5lYOVg/exec';
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, query, orderBy, serverTimestamp, writeBatch, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAzGc3KVQFYIoQ7W_WZAj585AbUpiU5HUI",
+          authDomain: "sasi-alfa-store-pps.firebaseapp.com",
+          projectId: "sasi-alfa-store-pps",
+          storageBucket: "sasi-alfa-store-pps.firebasestorage.app",
+          messagingSenderId: "739926676625",
+          appId: "1:739926676625:web:b4ff509e304f980ff71b30"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let stockTeoricoCol, datosVentasCol, datosConteoCol;
         let stockTeorico = [], datosVentas = [], datosConteo = [];
+        let userId = null, userEmail = null;
+
         const formVentas = document.getElementById('form-ventas');
         const formConteo = document.getElementById('form-conteo');
         const formCorreccion = document.getElementById('form-correccion');
         const formAnulacion = document.getElementById('form-anulacion');
         const dashboardBody = document.getElementById('dashboard-body');
         const csvFileInput = document.getElementById('csv-file-input');
-        const btnLimpiarDatos = document.getElementById('btn-limpiar-datos');
         const btnDescargarCSV = document.getElementById('btn-descargar-csv');
-        const toastElement = document.getElementById('toast');
+        const btnLimpiarDatos = document.getElementById('btn-limpiar-datos');
         const searchInput = document.getElementById('search-input');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const authSection = document.getElementById('auth-section');
+        const appContent = document.getElementById('app-content');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const btnLogin = document.getElementById('btn-login');
+        const btnRegister = document.getElementById('btn-register');
+        const btnLogout = document.getElementById('btn-logout');
+        const myModal = document.getElementById('myModal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalButtons = document.getElementById('modal-buttons');
+        const closeButton = document.querySelector('.close-button');
 
-        // --- DATA MANAGEMENT FUNCTIONS ---
-        function saveData() {
-            localStorage.setItem('stockTeorico', JSON.stringify(stockTeorico));
-            localStorage.setItem('datosVentas', JSON.stringify(datosVentas));
-            localStorage.setItem('datosConteo', JSON.stringify(datosConteo));
+        function showModal(message) {
+            modalMessage.innerHTML = `<p>${message}</p>`;
+            modalButtons.innerHTML = `<button class="btn btn-primary">Aceptar</button>`;
+            modalButtons.firstElementChild.onclick = () => { myModal.style.display = 'none'; };
+            myModal.style.display = 'flex';
         }
 
-        function loadData() {
-            stockTeorico = JSON.parse(localStorage.getItem('stockTeorico')) || [];
-            datosVentas = JSON.parse(localStorage.getItem('datosVentas')) || [];
-            datosConteo = JSON.parse(localStorage.getItem('datosConteo')) || [];
-            datosVentas.forEach(v => v.timestamp = new Date(v.timestamp));
-            datosConteo.forEach(c => c.timestamp = new Date(c.timestamp));
+        function showModalConInput(title, message, confirmationText, onConfirm) {
+            modalMessage.innerHTML = `<h3 class="text-xl font-bold text-red-700 mb-2">${title}</h3><p class="mb-4">${message}</p><input type="text" id="modal-confirm-input" class="input-field" placeholder="Escribe '${confirmationText}' para confirmar">`;
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = 'Confirmar y Borrar Todo';
+            confirmBtn.className = 'btn btn-danger';
+            confirmBtn.disabled = true;
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.className = 'btn btn-secondary';
+            
+            modalButtons.innerHTML = '';
+            modalButtons.appendChild(cancelBtn);
+            modalButtons.appendChild(confirmBtn);
+
+            const input = document.getElementById('modal-confirm-input');
+            input.oninput = () => { confirmBtn.disabled = input.value !== confirmationText; };
+            
+            cancelBtn.onclick = () => { myModal.style.display = 'none'; };
+            confirmBtn.onclick = () => {
+                myModal.style.display = 'none';
+                onConfirm();
+            };
+            myModal.style.display = 'flex';
         }
 
-        function limpiarDatos() {
-            localStorage.clear();
-            stockTeorico = []; datosVentas = []; datosConteo = [];
-            renderDashboard();
-            showToast('Todos los datos han sido borrados.');
-        }
-        
-        function showToast(message, type = 'success') {
+        closeButton.onclick = () => { myModal.style.display = 'none'; };
+        window.onclick = (event) => { if (event.target == myModal) { myModal.style.display = 'none'; } };
+
+        function showToast(message) {
+            const toastElement = document.getElementById('toast');
             toastElement.textContent = message;
-            toastElement.className = ``;
-            toastElement.classList.add('show', type);
+            toastElement.className = 'show success';
             setTimeout(() => { toastElement.classList.remove('show'); }, 3000);
         }
 
-        function normalizarSku(sku) { return sku.toUpperCase().trim(); }
+        const normalizarSku = (sku) => sku.toUpperCase().trim();
 
-        // --- LOAD AND REGISTER LOGIC ---
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const rows = text.split('\n').filter(row => row.trim() !== '').slice(1);
-                try {
-                    const nuevosProductos = rows.map(row => {
-                        const columns = row.split(';');
-                        if (columns.length < 3) throw new Error(`Fila inválida: ${row}`);
-                        const sku = normalizarSku(columns[0]);
-                        const stock = parseInt(columns[2], 10);
-                        if (isNaN(stock)) throw new Error(`Stock inválido para SKU ${sku}`);
-                        return { sku, descripcion: columns[1].trim(), stock };
-                    });
-                    stockTeorico = nuevosProductos;
-                    saveData();
-                    renderDashboard();
-                    showToast(`Catálogo cargado con ${stockTeorico.length} productos.`);
-                } catch (error) { showToast(`Error al procesar CSV: ${error.message}`, 'error'); }
-            };
-            reader.readAsText(file);
-            csvFileInput.value = '';
-        }
-
-        function registrarVenta(event) {
-            event.preventDefault();
-            const skuInput = document.getElementById('venta-sku'), cantidadInput = document.getElementById('venta-cantidad');
-            const sku = normalizarSku(skuInput.value);
-            if (!stockTeorico.some(p => p.sku === sku)) { showToast('Error: El SKU no existe en el catálogo.', 'error'); return; }
-            datosVentas.push({ timestamp: new Date(), sku: sku, cantidad: parseInt(cantidadInput.value, 10) });
-            saveData(); renderDashboard(); formVentas.reset(); skuInput.focus(); showToast('Venta registrada correctamente.');
-        }
-
-        function anadirAlConteo(event) {
-            event.preventDefault();
-            const skuInput = document.getElementById('conteo-sku'), cantidadInput = document.getElementById('conteo-cantidad');
-            const sku = normalizarSku(skuInput.value);
-            if (!stockTeorico.some(p => p.sku === sku)) { showToast('Error: El SKU no existe en el catálogo.', 'error'); return; }
-            datosConteo.push({ timestamp: new Date(), sku: sku, cantidad: parseInt(cantidadInput.value, 10), tipo: 'conteo' });
-            saveData(); renderDashboard(); formConteo.reset(); skuInput.focus(); showToast('Cantidad añadida al conteo.');
-        }
-
-        async function sendToAudit(logData) {
-            if (GOOGLE_SCRIPT_URL === 'URL_A_REEMPLAZAR') {
-                showToast('Error: La URL del script de Google no está configurada.', 'error');
+        function sendToAudit(logData) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('URL_DE_TU_NUEVO_SCRIPT_AQUI')) {
+                showModal('Error: La URL de auditoría no está configurada en el archivo HTML.');
                 return false;
             }
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(logData)
-                });
-                showToast('Operación enviada a auditoría.');
-                return true;
-            } catch (error) {
-                console.error('Error enviando a Google Sheets:', error);
-                showToast('Error al enviar a auditoría. Ver consola.', 'error');
-                return false;
-            }
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(logData)
+            }).catch(err => console.error("Error en el envío de auditoría (ignorado por no-cors):", err));
+            showToast('Operación enviada a auditoría.');
+            return true;
         }
-
+        
         async function corregirConteo(event) {
             event.preventDefault();
-            const skuInput = document.getElementById('correc-sku'), cantidadInput = document.getElementById('correc-cantidad'),
-                  emailInput = document.getElementById('correc-email'), codigoInput = document.getElementById('correc-codigo');
-            if (codigoInput.value !== '10234567') { showToast('Error: Código de autorización incorrecto.', 'error'); return; }
-            const sku = normalizarSku(skuInput.value);
-            if (!stockTeorico.some(p => p.sku === sku)) { showToast('Error: El SKU no existe en el catálogo.', 'error'); return; }
+            const sku = normalizarSku(document.getElementById('correc-sku').value);
+            const email = document.getElementById('correc-email').value;
+            if (document.getElementById('correc-codigo').value !== '10234567') {
+                return showModal('Código de autorización incorrecto.');
+            }
+            if (!stockTeorico.some(p => p.sku === sku)) {
+                return showModal('El SKU no existe en el catálogo.');
+            }
             const fisicoContadoActual = calcularFisicoContado(sku);
-            const nuevaCantidadTotal = parseInt(cantidadInput.value, 10);
-            const logData = { tipo: 'Corrección de Stock', timestamp: new Date().toISOString(), sku, email: emailInput.value, cantidadAnterior: fisicoContadoActual, cantidadNueva: nuevaCantidadTotal };
-            
-            const success = await sendToAudit(logData);
-            if (success) {
-                datosConteo.push({ timestamp: new Date(), sku, cantidad: nuevaCantidadTotal, tipo: 'modificacion', email: emailInput.value });
-                saveData(); renderDashboard(); formCorreccion.reset();
+            const nuevaCantidadTotal = parseInt(document.getElementById('correc-cantidad').value, 10);
+            const logData = {
+                tipo: 'Corrección de Stock', sku, email,
+                cantidadAnterior: fisicoContadoActual,
+                cantidadNueva: nuevaCantidadTotal
+            };
+            if (!sendToAudit(logData)) return;
+            try {
+                await addDoc(datosConteoCol, {
+                    timestamp: serverTimestamp(), sku, cantidad: nuevaCantidadTotal,
+                    tipo: 'modificacion', email, userId, businessId: BUSINESS_ID
+                });
+                showToast('Stock corregido y registrado.');
+                event.target.reset();
+            } catch (error) {
+                showModal('Error al corregir el stock en Firestore.');
+                console.error("Error al corregir conteo:", error);
             }
         }
 
         async function anularVenta(event) {
             event.preventDefault();
-            const skuInput = document.getElementById('anular-sku'), cantidadInput = document.getElementById('anular-cantidad'),
-                  emailInput = document.getElementById('anular-email'), codigoInput = document.getElementById('anular-codigo');
-            if (codigoInput.value !== '10234567') { showToast('Error: Código de autorización incorrecto.', 'error'); return; }
-            const sku = normalizarSku(skuInput.value);
-            if (!stockTeorico.some(p => p.sku === sku)) { showToast('Error: El SKU no existe en el catálogo.', 'error'); return; }
-            const cantidadAnular = parseInt(cantidadInput.value, 10);
-            const logData = { tipo: 'Anulación de Venta', timestamp: new Date().toISOString(), sku, email: emailInput.value, cantidadAnterior: `N/A (Anulación de ${cantidadAnular})`, cantidadNueva: -cantidadAnular };
-
-            const success = await sendToAudit(logData);
-            if(success) {
-                datosVentas.push({ timestamp: new Date(), sku, cantidad: -cantidadAnular });
-                saveData(); renderDashboard(); formAnulacion.reset();
+            const sku = normalizarSku(document.getElementById('anular-sku').value);
+            const email = document.getElementById('anular-email').value;
+            if (document.getElementById('anular-codigo').value !== '10234567') {
+                return showModal('Código de autorización incorrecto.');
+            }
+            if (!stockTeorico.some(p => p.sku === sku)) {
+                return showModal('El SKU no existe en el catálogo.');
+            }
+            const cantidadAnular = parseInt(document.getElementById('anular-cantidad').value, 10);
+            const logData = {
+                tipo: 'Anulación de Venta', sku, email,
+                cantidadAnulada: cantidadAnular
+            };
+            if (!sendToAudit(logData)) return;
+            try {
+                await addDoc(datosVentasCol, {
+                    timestamp: serverTimestamp(), sku, cantidad: -cantidadAnular,
+                    userId, businessId: BUSINESS_ID
+                });
+                showToast('Venta anulada y registrada.');
+                event.target.reset();
+            } catch (error) {
+                showModal('Error al anular la venta en Firestore.');
+                console.error("Error al anular venta:", error);
             }
         }
+        
+        async function limpiarDatosDelNegocio() {
+            showModalConInput(
+                '¡ADVERTENCIA! ACCIÓN IRREVERSIBLE',
+                'Esto borrará de forma PERMANENTE todo el catálogo de productos, todas las ventas y todos los conteos para este negocio. Esta acción no se puede deshacer.',
+                'BORRAR DATOS',
+                async () => {
+                    showToast('Eliminando datos... por favor espere.');
+                    try {
+                        const colecciones = [stockTeoricoCol, datosVentasCol, datosConteoCol];
+                        for (const coleccion of colecciones) {
+                            const snapshot = await getDocs(coleccion);
+                            const batch = writeBatch(db);
+                            snapshot.forEach(doc => batch.delete(doc.ref));
+                            await batch.commit();
+                        }
+                        showToast('¡Todos los datos del negocio han sido eliminados!');
+                    } catch (error) {
+                        console.error("Error al eliminar los datos:", error);
+                        showModal('Ocurrió un error al eliminar los datos. Revisa la consola.');
+                    }
+                }
+            );
+        }
 
-        // --- MAIN RENDER AND CALCULATION FUNCTIONS ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid; userEmail = user.email;
+                userIdDisplay.textContent = userEmail || userId;
+                const userDocRef = doc(db, "users", userId);
+                try {
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists() && userDoc.data().businessId === BUSINESS_ID) {
+                        authSection.style.display = 'none'; appContent.style.display = 'block';
+                        stockTeoricoCol = collection(db, `businesses/${BUSINESS_ID}/stockTeorico`);
+                        datosVentasCol = collection(db, `businesses/${BUSINESS_ID}/datosVentas`);
+                        datosConteoCol = collection(db, `businesses/${BUSINESS_ID}/datosConteo`);
+                        setupFirestoreListeners();
+                    } else {
+                        await signOut(auth); showModal('Acceso denegado. Usuario no pertenece a este negocio.');
+                    }
+                } catch (error) {
+                    console.error("Error al verificar perfil:", error); await signOut(auth);
+                    showModal('Error de permisos al verificar tu perfil.');
+                }
+            } else {
+                userId = null; userEmail = null;
+                userIdDisplay.textContent = 'No autenticado';
+                authSection.style.display = 'flex'; appContent.style.display = 'none';
+                stockTeorico = []; datosVentas = []; datosConteo = [];
+                renderDashboard();
+            }
+        });
+
+        function setupFirestoreListeners() {
+            onSnapshot(query(collection(db, `businesses/${BUSINESS_ID}/stockTeorico`)), (snapshot) => {
+                stockTeorico = snapshot.docs.map(doc => ({ sku: doc.id, ...doc.data() }));
+                renderDashboard();
+            });
+            onSnapshot(query(collection(db, `businesses/${BUSINESS_ID}/datosVentas`), orderBy("timestamp")), (snapshot) => {
+                datosVentas = snapshot.docs.map(doc => ({...doc.data(), timestamp: doc.data().timestamp }));
+                renderDashboard();
+            });
+            onSnapshot(query(collection(db, `businesses/${BUSINESS_ID}/datosConteo`), orderBy("timestamp")), (snapshot) => {
+                datosConteo = snapshot.docs.map(doc => ({...doc.data(), timestamp: doc.data().timestamp }));
+                renderDashboard();
+            });
+        }
+        
         function calcularFisicoContado(sku) {
             const conteosSKU = datosConteo.filter(c => c.sku === sku);
             if (conteosSKU.length === 0) return 0;
@@ -288,6 +405,29 @@
             }
         }
 
+        function renderDashboard() {
+            const motorCalculos = getDashboardData();
+            const formatFecha = (fecha) => !fecha ? 'N/A' : fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+            let rowsHtml = '';
+            motorCalculos.forEach(item => {
+                const estadoClass = `badge-${item.estadoCalculado.toLowerCase()}`;
+                rowsHtml += `<tr>
+                    <td class="table-cell font-bold text-center">${item.prioridad}</td>
+                    <td class="table-cell font-semibold text-indigo-700">${item.sku}</td>
+                    <td class="table-cell"><span class="badge ${estadoClass}">${item.estadoCalculado}</span></td>
+                    <td class="table-cell font-semibold ${item.diferenciaAuditoria < 0 ? 'text-red-600' : ''}">${item.diferenciaAuditoria}</td>
+                    <td class="table-cell font-semibold ${typeof item.diferenciaConteoDirecta === 'number' && item.diferenciaConteoDirecta < 0 ? 'text-red-600' : ''}">${item.diferenciaConteoDirecta}</td>
+                    <td class="table-cell font-bold text-lg">${item.stockFinalCalculado}</td>
+                    <td class="table-cell">${item.stockTeorico}</td>
+                    <td class="table-cell">${item.horaConteo ? item.fisicoContado : 'N/A'}</td>
+                    <td class="table-cell">${item.ventas}</td>
+                    <td class="table-cell text-sm">${formatFecha(item.horaConteo)}</td>
+                    <td class="table-cell text-sm">${formatFecha(item.horaVenta)}</td>
+                </tr>`;
+            });
+            dashboardBody.innerHTML = rowsHtml;
+        }
+
         function getDashboardData() {
             const searchTerm = searchInput.value.toUpperCase().trim();
             let motorCalculos = stockTeorico.map(producto => {
@@ -296,93 +436,98 @@
                 const ventasFiltradas = datosVentas.filter(v => v.sku === sku);
                 const agregadoVentas = {
                     total: ventasFiltradas.reduce((sum, v) => sum + v.cantidad, 0),
-                    ultimaVenta: ventasFiltradas.length > 0 ? new Date(Math.max(...ventasFiltradas.map(v => v.timestamp))) : null
+                    ultimaVenta: ventasFiltradas.length > 0 ? new Date(Math.max(...ventasFiltradas.map(v => v.timestamp ? v.timestamp.toDate().getTime() : 0))) : null
                 };
                 const conteosFiltrados = datosConteo.filter(c => c.sku === sku);
-                const ultimoConteoTimestamp = conteosFiltrados.length > 0 ? new Date(Math.max(...conteosFiltrados.map(c => c.timestamp))) : null;
-                const stockTeoricoInicial = producto.stock, ventas = agregadoVentas.total;
-                const horaConteo = ultimoConteoTimestamp, horaVenta = agregadoVentas.ultimaVenta;
+                const ultimoConteoTimestamp = conteosFiltrados.length > 0 ? new Date(Math.max(...conteosFiltrados.map(c => c.timestamp ? c.timestamp.toDate().getTime() : 0))) : null;
+                const stockTeoricoInicial = producto.stock;
+                const ventas = agregadoVentas.total;
+                const horaConteo = ultimoConteoTimestamp;
                 let stockFinalCalculado;
-                if (!horaConteo) { stockFinalCalculado = stockTeoricoInicial - ventas; } 
-                else if (horaVenta && horaVenta > horaConteo) { stockFinalCalculado = fisicoContado - ventas; } 
-                else { stockFinalCalculado = stockTeoricoInicial - ventas; }
-                let diferenciaAuditoria = horaConteo ? stockFinalCalculado - (stockTeoricoInicial - ventas) : 0;
+                if (!horaConteo) {
+                    stockFinalCalculado = stockTeoricoInicial - ventas;
+                } else {
+                     stockFinalCalculado = fisicoContado - ventasFiltradas.filter(v => v.timestamp && v.timestamp.toDate() > horaConteo).reduce((sum, v) => sum + v.cantidad, 0);
+                }
+                let diferenciaAuditoria = horaConteo ? fisicoContado - (stockTeoricoInicial - ventasFiltradas.filter(v => v.timestamp && v.timestamp.toDate() < horaConteo).reduce((sum, v) => sum + v.cantidad, 0)) : 0;
                 let diferenciaConteoDirecta = horaConteo ? fisicoContado - stockTeoricoInicial : 'N/A';
                 let estadoCalculado, prioridad;
                 if (!horaConteo) { estadoCalculado = 'Pendiente'; prioridad = 3; } 
-                else if (diferenciaAuditoria === 0) { estadoCalculado = 'Cuadrado'; prioridad = 4; } 
-                else if (diferenciaAuditoria > 0) { estadoCalculado = 'Sobrante'; prioridad = 2; } 
+                else if (diferenciaAuditoria === 0) { estadoCalculado = 'Cuadrado'; prioridad = 4; }
+                else if (diferenciaAuditoria > 0) { estadoCalculado = 'Sobrante'; prioridad = 2; }
                 else { estadoCalculado = 'Faltante'; prioridad = 1; }
-                return { sku, descripcion: producto.descripcion, stockTeorico: stockTeoricoInicial, fisicoContado, ventas, horaConteo, horaVenta, diferenciaAuditoria, diferenciaConteoDirecta, stockFinalCalculado, estadoCalculado, prioridad };
+                return { sku, ...producto, stockTeorico: stockTeoricoInicial, fisicoContado, ventas, horaConteo, horaVenta: agregadoVentas.ultimaVenta, diferenciaAuditoria, diferenciaConteoDirecta, stockFinalCalculado, estadoCalculado, prioridad };
             });
             if (searchTerm) {
-                motorCalculos = motorCalculos.filter(item => item.sku.toUpperCase().includes(searchTerm) || item.descripcion.toUpperCase().includes(searchTerm));
+                motorCalculos = motorCalculos.filter(item => item.sku.toUpperCase().includes(searchTerm));
             }
             motorCalculos.sort((a, b) => {
                 if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad;
-                return a.diferenciaAuditoria - b.diferenciaAuditoria;
+                return Math.abs(b.diferenciaAuditoria) - Math.abs(a.diferenciaAuditoria);
             });
             return motorCalculos;
         }
 
-        function renderDashboard() {
-            const motorCalculos = getDashboardData();
-            const formatFecha = (fecha) => !fecha ? 'N/A' : fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-            let rowsHtml = '';
-            motorCalculos.forEach(item => {
-                const estadoClass = `badge-${item.estadoCalculado.toLowerCase()}`;
-                const difAuditoriaClass = item.diferenciaAuditoria < 0 ? 'text-red-600' : (item.diferenciaAuditoria > 0 ? 'text-green-600' : '');
-                const difDirectaClass = typeof item.diferenciaConteoDirecta === 'number' && item.diferenciaConteoDirecta < 0 ? 'text-red-600' : (typeof item.diferenciaConteoDirecta === 'number' && item.diferenciaConteoDirecta > 0 ? 'text-green-600' : '');
-                rowsHtml += `<tr><td class="table-cell font-bold text-center">${item.prioridad}</td><td class="table-cell font-semibold text-indigo-700">${item.sku}</td><td class="table-cell"><span class="badge ${estadoClass}">${item.estadoCalculado}</span></td><td class="table-cell font-semibold ${difAuditoriaClass}">${item.diferenciaAuditoria}</td><td class="table-cell font-semibold ${difDirectaClass}">${item.diferenciaConteoDirecta}</td><td class="table-cell font-bold text-lg">${item.stockFinalCalculado}</td><td class="table-cell">${item.stockTeorico}</td><td class="table-cell">${item.horaConteo ? item.fisicoContado : 'N/A'}</td><td class="table-cell">${item.ventas}</td><td class="table-cell text-sm">${formatFecha(item.horaConteo)}</td><td class="table-cell text-sm">${formatFecha(item.horaVenta)}</td></tr>`;
-            });
-            dashboardBody.innerHTML = rowsHtml;
-        }
-
-        function descargarCSV() {
-            const data = getDashboardData();
-            const headers = ["Prioridad", "SKU", "Descripción", "Estado", "Dif. Auditoría", "Dif. Conteo vs Teórico", "Stock Final Real", "Stock Teórico", "Físico Contado", "Total Vendido", "Fecha Conteo", "Fecha Venta"];
-            let csvContent = headers.join(";") + "\n";
-
-            data.forEach(item => {
-                const row = [
-                    item.prioridad,
-                    item.sku,
-                    `"${item.descripcion}"`,
-                    item.estadoCalculado,
-                    item.diferenciaAuditoria,
-                    item.diferenciaConteoDirecta,
-                    item.stockFinalCalculado,
-                    item.stockTeorico,
-                    item.horaConteo ? item.fisicoContado : 'N/A',
-                    item.ventas,
-                    item.horaConteo ? item.horaConteo.toLocaleString('es-AR') : 'N/A',
-                    item.horaVenta ? item.horaVenta.toLocaleString('es-AR') : 'N/A'
-                ];
-                csvContent += row.join(";") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "balance_inventario.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // --- INITIALIZATION AND EVENT LISTENERS ---
-        csvFileInput.addEventListener('change', handleFileUpload);
-        formVentas.addEventListener('submit', registrarVenta);
-        formConteo.addEventListener('submit', anadirAlConteo);
+        btnLogin.addEventListener('click', async () => {
+            try { await signInWithEmailAndPassword(auth, authEmailInput.value, authPasswordInput.value); showToast('Sesión iniciada.'); }
+            catch (error) { showModal('Credenciales incorrectas.'); }
+        });
+        btnRegister.addEventListener('click', async () => {
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, authEmailInput.value, authPasswordInput.value);
+                await setDoc(doc(db, "users", cred.user.uid), { email: cred.user.email, businessId: BUSINESS_ID, createdAt: serverTimestamp() });
+                showToast('Usuario registrado.');
+            } catch (error) { showModal('Error al registrar. El email ya podría estar en uso.'); }
+        });
+        btnLogout.addEventListener('click', () => signOut(auth));
+        btnLimpiarDatos.addEventListener('click', limpiarDatosDelNegocio);
+        formVentas.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const sku = normalizarSku(document.getElementById('venta-sku').value);
+            if (!stockTeorico.some(p => p.sku === sku)) return showModal('SKU no encontrado.');
+            await addDoc(datosVentasCol, { timestamp: serverTimestamp(), sku, cantidad: parseInt(document.getElementById('venta-cantidad').value, 10), userId, businessId: BUSINESS_ID });
+            e.target.reset();
+        });
+        formConteo.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const sku = normalizarSku(document.getElementById('conteo-sku').value);
+            if (!stockTeorico.some(p => p.sku === sku)) return showModal('SKU no encontrado.');
+            await addDoc(datosConteoCol, { timestamp: serverTimestamp(), sku, cantidad: parseInt(document.getElementById('conteo-cantidad').value, 10), tipo: 'conteo', userId, businessId: BUSINESS_ID });
+            e.target.reset();
+        });
         formCorreccion.addEventListener('submit', corregirConteo);
         formAnulacion.addEventListener('submit', anularVenta);
-        btnLimpiarDatos.addEventListener('click', limpiarDatos);
+        csvFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+            const rows = text.split('\n').filter(row => row.trim() !== '').slice(1);
+            const batch = writeBatch(db);
+            rows.forEach(row => {
+                const cols = row.split(';');
+                if (cols.length < 3) return;
+                const sku = normalizarSku(cols[0]);
+                const docRef = doc(stockTeoricoCol, sku);
+                batch.set(docRef, { descripcion: cols[1].trim(), stock: parseInt(cols[2], 10) });
+            });
+            await batch.commit();
+            showToast('Catálogo cargado.');
+        });
+        btnDescargarCSV.addEventListener('click', () => {
+            const data = getDashboardData();
+            const headers = ["Prioridad", "SKU", "Descripción", "Estado", "Dif. Auditoría", "Stock Final Real", "Stock Teórico", "Físico Contado", "Total Vendido"];
+            let csvContent = headers.join(";") + "\n";
+            data.forEach(item => {
+                const row = [item.prioridad, item.sku, `"${(item.descripcion || '').replace(/"/g, '""')}"`, item.estadoCalculado, item.diferenciaAuditoria, item.stockFinalCalculado, item.stockTeorico, item.horaConteo ? item.fisicoContado : 'N/A', item.ventas];
+                csvContent += row.join(";") + "\n";
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+            link.setAttribute("download", `balance_inventario_${BUSINESS_ID}.csv`);
+            link.click();
+        });
         searchInput.addEventListener('input', renderDashboard);
-        btnDescargarCSV.addEventListener('click', descargarCSV);
 
-        window.onload = () => { loadData(); renderDashboard(); };
     </script>
 </body>
 </html>
